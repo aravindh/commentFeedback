@@ -1,18 +1,32 @@
 package com.aravindh.commentFeedback.service;
 
 import spark.utils.StringUtils;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+
+import java.util.*;
 
 public class FeedBackValidationService {
-    private static List<String> objectionableWords = Arrays.asList("worst", "bad");
+    private static List<String> objectionableWords = new LinkedList<>();
     private static String SPACE = " ";
+    private static boolean isCacheUpdateInProcess = false;
 
+    /*
+    * Update the list of objectionable words list.
+    * */
+    public static void init(List<String> wordsToBeAdded){
+        isCacheUpdateInProcess = true;
+        objectionableWords.addAll(wordsToBeAdded);
+        isCacheUpdateInProcess = false;
+    }
+
+    /*
+    * Given a sentence checks whether it has any Objectionable words or not, if it has it returns the list of objectionable words, else it returns empty list
+    * */
     public static List<String> validate(String body) {
         if(StringUtils.isEmpty(body)){
             return Collections.EMPTY_LIST;
+        }
+        if(isCacheUpdateInProcess){
+            throw new IllegalArgumentException("Cache update in progress");
         }
         List<String> feedback = new LinkedList<>();
         validateWords(body, feedback);
@@ -22,19 +36,10 @@ public class FeedBackValidationService {
     private static void validateWords(String body, List<String> feedback) {
         String[] words = body.split(SPACE);
         for(String word : words){
-            if(containsCaseInsensitive(objectionableWords, word)){
+            if(objectionableWords.contains(word.toLowerCase())){
                 feedback.add(word+": objectionable content");
             }
         }
-    }
-
-    private static boolean containsCaseInsensitive(List<String> objectionableWords, String word) {
-        for(String objectionableWord:objectionableWords){
-            if(word.equalsIgnoreCase(objectionableWord)){
-                return true;
-            }
-        }
-        return false;
     }
 
 }
